@@ -14,6 +14,7 @@ builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<ISkillRepository, SkillRepository>();
 builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
 
 // Add services to the container.
 builder.Services.AddControllers();

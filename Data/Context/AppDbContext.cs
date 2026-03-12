@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Project> Projects { get; set; } = null!;
+    public DbSet<Image> Images { get; set; } = null!;
     public DbSet<Category> Categories { get; set; } = null!;
     public DbSet<Skill> Skills { get; set; } = null!;
     public DbSet<SkillToUser> SkillToUsers { get; set; } = null!;
@@ -31,6 +32,13 @@ public class AppDbContext : DbContext
             .HasOne(p => p.User)
             .WithMany(u => u.Projects)
             .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Image: ProjectId → Project (One-to-Many)
+        modelBuilder.Entity<Image>()
+            .HasOne(i => i.Project)
+            .WithMany(p => p.Images)
+            .HasForeignKey(i => i.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Skill: CategoryId → Category (Many-to-One)

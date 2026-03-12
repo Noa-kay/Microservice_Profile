@@ -11,7 +11,7 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetProfileDataAsync(int userId, CancellationToken ct = default) =>
         await _context.Users
-            .Include(u => u.Projects)
+            .Include(u => u.Projects).ThenInclude(p => p.Images)
             .Include(u => u.SkillToUsers).ThenInclude(stu => stu.Skill)
             .Include(u => u.Files)
             .FirstOrDefaultAsync(u => u.Id == userId, ct);
