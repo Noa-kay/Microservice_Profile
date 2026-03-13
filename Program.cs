@@ -1,17 +1,48 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using ProfilMicroservice.Domain;
 using ProfilMicroservice.DTOs;
 using ProfilMicroservice.Mappers;
+using student_profile.Data.Context;
+using student_profile.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Database configuration
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repository registration
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPersonalDetailsRepository, PersonalDetailsRepository>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<ISkillRepository, SkillRepository>();
+builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
+
+// AutoMapper (for your DTOs + aggregates)
+builder.Services.AddAutoMapper(typeof(UserMapperProfile).Assembly);
+
+// Controllers + Swagger
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAutoMapper(typeof(UserMapperProfile).Assembly);
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
+// HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -19,7 +50,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+app.UseAuthorization();
+app.MapControllers();
 
+// Existing minimal API endpoint using your aggregate + AutoMapper
 app.MapGet("/api/profile/{userId:guid}", (Guid userId, IMapper mapper) =>
 {
     var aggregate = new UserProfileAggregate
@@ -44,8 +79,7 @@ app.MapGet("/api/profile/{userId:guid}", (Guid userId, IMapper mapper) =>
                 Title = "Demo Project",
                 Description = "Demo description",
                 ProjectName = "Demo",
-                GitHubLink = "https://github.com/demo/demo",
-                ProjectsImages = new[] { "https://example.com/image1.png" }
+                GitHubLink = "https://github.com/demo/demo"
             }
         },
         Resumes = Array.Empty<UserFile>(),
