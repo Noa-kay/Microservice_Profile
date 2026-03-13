@@ -1,15 +1,15 @@
 using student_profile.Data.Models;
- 
-namespace student_profile.Data.Repositories;
- 
-public interface IImageRepository
+
+namespace student_profile.Data.Repositories
 {
-    Task<Image?> GetImageByIdAsync(int imageId, CancellationToken ct = default);
-    Task<IEnumerable<Image>> GetAllImagesAsync(CancellationToken ct = default);
-    Task<IEnumerable<Image>> GetImagesByProjectIdAsync(int projectId, CancellationToken ct = default);
-    Task<Image> AddImageAsync(Image image, CancellationToken ct = default);
-    Task<Image> UpdateImageAsync(Image image, CancellationToken ct = default);
-    Task DeleteImageAsync(int imageId, CancellationToken ct = default);
-    Task<bool> ImageExistsAsync(int imageId, CancellationToken ct = default);
+    public interface IImageRepository
+    {
+        Task<Image?> GetImageByIdAsync(Guid imageId, CancellationToken ct = default);
+        Task<IEnumerable<Image>> GetAllImagesAsync(CancellationToken ct = default);
+        Task<IEnumerable<Image>> GetImagesByProjectIdAsync(Guid projectId, CancellationToken ct = default);
+        Task<Image> AddImageAsync(Image image, CancellationToken ct = default);
+        Task<Image> UpdateImageAsync(Image image, CancellationToken ct = default);
+        Task DeleteImageAsync(Guid imageId, CancellationToken ct = default);
+        Task<bool> ImageExistsAsync(Guid imageId, CancellationToken ct = default);
+    }
 }
- 

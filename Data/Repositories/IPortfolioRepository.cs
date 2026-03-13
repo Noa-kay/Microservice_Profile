@@ -1,11 +1,12 @@
 using student_profile.Data.Models;
 
-namespace student_profile.Data.Repositories;
-
-public interface IPortfolioRepository
+namespace student_profile.Data.Repositories
 {
-    Task<IEnumerable<Project>> GetProjectsByUserIdAsync(int userId, CancellationToken ct = default);
-    Task AddProjectAsync(int userId, Project project, CancellationToken ct = default);
-    Task UpdateProjectAsync(int projectId, Project project, CancellationToken ct = default);
-    Task DeleteProjectAsync(int projectId, CancellationToken ct = default);
+    public interface IPortfolioRepository
+    {
+        Task<IEnumerable<Project>> GetProjectsByUserIdAsync(Guid userId, CancellationToken ct = default);
+        Task AddProjectAsync(Guid userId, Project project, CancellationToken ct = default);
+        Task UpdateProjectAsync(Guid projectId, Project project, CancellationToken ct = default);
+        Task DeleteProjectAsync(Guid projectId, CancellationToken ct = default);
+    }
 }

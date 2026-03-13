@@ -1,20 +1,11 @@
 using student_profile.Data.Models;
- 
-namespace student_profile.Data.Repositories;
- 
-// DTO for updating user skills with experience
-public class UserSkillUpdateDto
+
+namespace student_profile.Data.Repositories
 {
-    public int SkillId { get; set; }
-    public int YearsOfExperience { get; set; }
+    public interface ISkillRepository
+    {
+        Task<IEnumerable<Skill>> GetAllSkillsByCategoryAsync(Guid categoryId, CancellationToken ct = default);
+        Task<IEnumerable<SkillToUser>> GetUserSkillsAsync(Guid userId, CancellationToken ct = default);
+        Task UpdateUserSkillsAsync(Guid userId, List<SkillToUser> skills, CancellationToken ct = default);
+    }
 }
- 
-public interface ISkillRepository
-{
-    Task<IEnumerable<Skill>> GetAllSkillsByCategoryAsync(int categoryId, CancellationToken ct = default);
-    Task<IEnumerable<SkillToUser>> GetUserSkillsAsync(int userId, CancellationToken ct = default);
-    
-    // *** FIXED: Changed signature to accept YearsOfExperience ***
-    Task UpdateUserSkillsAsync(int userId, List<UserSkillUpdateDto> skills, CancellationToken ct = default);
-}
- 

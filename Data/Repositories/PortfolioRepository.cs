@@ -2,43 +2,43 @@ using Microsoft.EntityFrameworkCore;
 using student_profile.Data.Context;
 using student_profile.Data.Models;
 
-namespace student_profile.Data.Repositories;
-
-public class PortfolioRepository : IPortfolioRepository
+namespace student_profile.Data.Repositories
 {
-    private readonly AppDbContext _context;
-
-    public PortfolioRepository(AppDbContext context) => _context = context;
-
-    public async Task<IEnumerable<Project>> GetProjectsByUserIdAsync(int userId, CancellationToken cancellationToken = default) =>
-        await _context.Projects
-            .Where(p => p.UserId == userId)
-            .ToListAsync(cancellationToken);
-
-    public async Task AddProjectAsync(int userId, Project project, CancellationToken cancellationToken = default)
+    public class PortfolioRepository : IPortfolioRepository
     {
-        project.UserId = userId;
-        _context.Projects.Add(project);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
+        private readonly AppDbContext _context;
+        public PortfolioRepository(AppDbContext context) => _context = context;
 
-    public async Task UpdateProjectAsync(int projectId, Project project, CancellationToken cancellationToken = default)
-    {
-        var existing = await _context.Projects.FindAsync(new object[] { projectId }, cancellationToken);
-        if (existing != null)
+        public async Task<IEnumerable<Project>> GetProjectsByUserIdAsync(Guid userId, CancellationToken ct = default) =>
+            await _context.Projects
+                .Where(p => p.UserId == userId)
+                .ToListAsync(ct);
+
+        public async Task AddProjectAsync(Guid userId, Project project, CancellationToken ct = default)
         {
-            _context.Entry(existing).CurrentValues.SetValues(project);
-            await _context.SaveChangesAsync(cancellationToken);
+            project.UserId = userId;
+            _context.Projects.Add(project);
+            await _context.SaveChangesAsync(ct);
         }
-    }
 
-    public async Task DeleteProjectAsync(int projectId, CancellationToken cancellationToken = default)
-    {
-        var project = await _context.Projects.FindAsync(new object[] { projectId }, cancellationToken);
-        if (project != null)
+        public async Task UpdateProjectAsync(Guid projectId, Project project, CancellationToken ct = default)
         {
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync(cancellationToken);
+            var existing = await _context.Projects.FindAsync(new object[] { projectId }, ct);
+            if (existing != null)
+            {
+                _context.Entry(existing).CurrentValues.SetValues(project);
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+
+        public async Task DeleteProjectAsync(Guid projectId, CancellationToken ct = default)
+        {
+            var project = await _context.Projects.FindAsync(new object[] { projectId }, ct);
+            if (project != null)
+            {
+                _context.Projects.Remove(project);
+                await _context.SaveChangesAsync(ct);
+            }
         }
     }
 }
