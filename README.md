@@ -67,4 +67,4 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 ---
 
 ## 👩‍💻 פותח על ידי
-**נועה** - אחראית שכבת **BLL** (חלק 2)
+**נועה** - אחראית על שכבת ה- **BLL** (חלק 2)
