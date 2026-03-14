@@ -65,6 +65,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 | **File** | POST | `/api/file/upload` | שירות עזר להעלאת קבצים עם ולידציית נפח |
 
 ---
+```
 
 ## 👩‍💻 פותח על ידי
 **נועה** - אחראית על שכבת ה- **BLL** (חלק 2)
