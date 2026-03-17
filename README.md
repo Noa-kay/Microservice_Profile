@@ -120,3 +120,70 @@ namespace MyProject.BLL
 - **AutoMapper** – Automates mapping between Entities and DTOs, eliminating repetitive manual mapping code.
 - **FluentValidation** – Keeps validation logic clean and decoupled from DTOs.
 - **Global Usings** – Use a `GlobalUsings.cs` file to avoid repetitive `using` statements across files.
+
+---
+
+## 🏗️ Business Logic Layer (BLL) – Noa's Part (חלק 2)
+
+שכבת ה-BLL מהווה את הליבה הלוגית של המערכת. היא אחראית על עיבוד הנתונים, אכיפת חוקים עסקיים, וביצוע הפרדה מוחלטת בין שכבת ה-Data (Entities) לבין שכבת ה-Presentation (Controllers/DTOs).
+
+### 🛠️ עקרונות ועבודה עם Clean Architecture
+
+- **Interfaces First** – עבודה מול ממשקים המאפשרת הזרקת תלות (Dependency Injection) ובדיקות יחידה קלות.  
+- **DTO Mapping עם AutoMapper** – מניעת חשיפה של מודלים מה-DB החוצה ושימוש ב־`MappingProfile` לריכוז כל ה־CreateMap.  
+- **Service Orchestration** – ריכוז לוגיקה מורכבת (כמו ניהול קשר Many-to-Many של Skills) בתוך שירותים ייעודיים.
+
+### 📂 מבנה תיקיית `BLL`
+
+| תיקייה | תפקיד |
+| :--- | :--- |
+| `Interfaces` | הגדרת ה-Contracts עבור ה-Services וה-Repositories. |
+| `Repositories` | מימוש הגישה לנתונים (כולל Generic Repository). |
+| `Services` | מימוש הלוגיקה העסקית, ניהול קבצים ואימות נתונים. |
+| `Mapping` | הגדרת פרופילי המיפוי של AutoMapper. |
+
+### ⚙️ פיצ'רים מרכזיים
+
+1. **ניהול פרופיל וכישורים (Skills)**  
+   - ניהול ישות `PersonalDetails` המקושרת ל־`User`.  
+   - לוגיקת עדכון כישורים המטפלת אוטומטית ב־`SkillToUser` – הוספה והסרה בשיחת API אחת.
+
+2. **מערכת ניהול פרויקטים**  
+   - CRUD מלא לפרויקטים של סטודנטים.  
+   - אינטגרציה עם `FileService` לשמירת תמונות פרויקט תחת `wwwroot/uploads`.
+
+3. **אימות נתונים (Validation)**  
+   - אימות Email באמצעות Regex.  
+   - בדיקת תקינות URLs (למשל GitHubLink).  
+   - הגבלת העלאת קבצים לסוגי תמונות בלבד ועד נפח של 5MB.
+
+### 🔧 התקנה והרצה (BLL)
+
+ה-BLL משתמש בחבילת NuGet:
+
+```bash
+dotnet add package AutoMapper.Extensions.Microsoft.DependencyInjection
+```
+
+רישום השירותים לדוגמה ב־`Program.cs`:
+
+```csharp
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+```
+
+### 🔌 Endpoints רלוונטיים ל-BLL
+
+| Controller | Method | Endpoint | Description |
+| :--- | :--- | :--- | :--- |
+| **Student** | GET | `/api/student/{userId}` | שליפת פרופיל סטודנט מלא כולל Skills |
+| **Student** | PUT | `/api/student` | עדכון פרטים אישיים וניהול רשימת כישורים |
+| **Project** | GET | `/api/project/user/{userId}` | שליפת כל הפרויקטים של משתמש ספציפי |
+| **Project** | POST | `/api/project/user/{userId}` | הוספת פרויקט חדש (כולל תמונה) |
+| **Project** | DELETE | `/api/project/{id}` | מחיקת פרויקט קיים |
+| **File** | POST | `/api/file/upload` | העלאת קבצים עם ולידציית סוג וגודל |
+
+### 👩‍💻 אחריות
+
+שכבת ה־**BLL (חלק 2)** פותחה על ידי **נועה**, בהתאם לחלוקת התפקידים המוגדרת בטבלת ה־Team Roles למעלה.

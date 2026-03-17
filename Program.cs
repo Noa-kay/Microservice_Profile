@@ -1,7 +1,10 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using student_profile.BLL.Interfaces;
+using student_profile.BLL.Repositories;
+using student_profile.BLL.Services;
+using student_profile.BLL.Mapping;
 using student_profile.Data.Context;
-using student_profile.Data.Repositories;
-using student_profile.BLL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,28 +12,36 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repository registration (Data layer)
+// Repository registration
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPersonalDetailsRepository, PersonalDetailsRepository>();
-builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IChatHistoryRepository, ChatHistoryRepository>();
 builder.Services.AddScoped<ISkillRepository, SkillRepository>();
-builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
-builder.Services.AddScoped<IFileRepository, FileRepository>();
-builder.Services.AddScoped<IImageRepository, ImageRepository>();
+builder.Services.AddScoped<IUserFileRepository, UserFileRepository>();
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
-// BLL Services
+// Services registration
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IFileService, FileService>();
+
+// Additional BLL services from main branch
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPersonalDetailsService, PersonalDetailsService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
-builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<IProjectService, ProjectService>();
+
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // Add CORS if needed
 builder.Services.AddCors(options =>
@@ -48,10 +59,12 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
