@@ -8,13 +8,18 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // מיפוי מפרויקט ל-DTO
+        // Project <-> ProjectDto
         CreateMap<Project, ProjectDto>().ReverseMap();
 
-        // מיפוי מפרטים אישיים ל-DTO של פרופיל
-        // שימי לב: ה-DTO כולל גם שדות מה-User וגם מה-PersonalDetails
+        // User -> StudentProfileDto (רק ה-Id; שאר השדות מגיעים מ-PersonalDetails/Skills)
+        CreateMap<User, StudentProfileDto>()
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
+            .ForAllOtherMembers(opt => opt.Ignore());
+
+        // PersonalDetails <-> StudentProfileDto
         CreateMap<PersonalDetails, StudentProfileDto>()
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+            .ForMember(dest => dest.Skills, opt => opt.Ignore())
             .ReverseMap();
             
         // ניתן להוסיף כאן מיפויים נוספים ככל שהפרויקט יגדל

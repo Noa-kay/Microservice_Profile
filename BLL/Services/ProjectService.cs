@@ -60,16 +60,11 @@ public class ProjectService : IProjectService
             imageUrl = await _fileService.UploadFileAsync(imageFile);
         }
 
-        var project = new Project
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Title = projectDto.Title,
-            Description = projectDto.Description,
-            ProjectName = projectDto.ProjectName,
-            GitHubLink = projectDto.GitHubLink,
-            ProjectsImages = imageUrl
-        };
+        // מיפוי דרך AutoMapper במקום בנייה ידנית
+        var project = _mapper.Map<Project>(projectDto);
+        project.Id = Guid.NewGuid();
+        project.UserId = userId;
+        project.ProjectsImages = imageUrl;
 
         await _projectRepository.AddAsync(project);
         await _projectRepository.SaveChangesAsync();
