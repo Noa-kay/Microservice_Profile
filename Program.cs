@@ -27,6 +27,14 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IFileService, FileService>();
 
+// Additional BLL services from main branch
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPersonalDetailsService, PersonalDetailsService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<ISkillService, SkillService>();
+builder.Services.AddScoped<IPortfolioService, PortfolioService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
