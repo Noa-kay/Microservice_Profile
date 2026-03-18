@@ -1,57 +1,85 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using student_profile.Data.Context;
+using student_profile.Data.Models;
+using student_profile.DTOs;
 
-namespace student_profile.BLL.Services;
+namespace student_profile.BLL;
+
+public interface IFileService
+{
+    Task<IEnumerable<UserFileDto>> GetAllDocumentsAsync(Guid userId, CancellationToken ct = default);
+    Task SaveFileAsync(UserFileDto file, CancellationToken ct = default);
+    Task DeleteDocumentAsync(Guid documentId, CancellationToken ct = default);
+    Task UpdateDocumentDetailsAsync(Guid documentId, UserFileDto newData, CancellationToken ct = default);
+}
 
 public class FileService : IFileService
 {
-    private readonly IWebHostEnvironment _environment;
+    private readonly AppDbContext _context;
 
-    public FileService(IWebHostEnvironment environment)
+    public FileService(AppDbContext context)
     {
-        _environment = environment;
+        _context = context;
     }
 
-    public async Task<string> UploadFileAsync(IFormFile file)
+    public async Task<IEnumerable<UserFileDto>> GetAllDocumentsAsync(Guid userId, CancellationToken ct = default)
     {
-        if (file == null || file.Length == 0)
+        return await _context.Files.AsNoTracking()
+            .Where(f => f.UserId == userId)
+            .Select(f => new UserFileDto
+            {
+                Id = f.Id,
+                UserId = f.UserId,
+                FileName = f.FileName,
+                FileType = f.FileType,
+                UploadDate = f.UploadDate,
+                FilePath = f.FilePath
+            })
+            .ToListAsync(ct);
+    }
+
+    public async Task SaveFileAsync(UserFileDto file, CancellationToken ct = default)
+    {
+        var entity = new UserFile
         {
-            throw new ArgumentException("File is empty.", nameof(file));
+            Id = file.Id == Guid.Empty ? Guid.NewGuid() : file.Id,
+            UserId = file.UserId,
+            FileName = file.FileName,
+            FileType = file.FileType,
+            UploadDate = file.UploadDate,
+            FilePath = file.FilePath
+        };
+
+        _context.Files.Add(entity);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task DeleteDocumentAsync(Guid documentId, CancellationToken ct = default)
+    {
+        var entity = await _context.Files.FirstOrDefaultAsync(f => f.Id == documentId, ct);
+        if (entity is null)
+        {
+            return;
         }
 
-        // גודל מקסימלי 5MB
-        const long maxSizeBytes = 5 * 1024 * 1024;
-        if (file.Length > maxSizeBytes)
+        _context.Files.Remove(entity);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateDocumentDetailsAsync(Guid documentId, UserFileDto newData, CancellationToken ct = default)
+    {
+        var entity = await _context.Files.FirstOrDefaultAsync(f => f.Id == documentId, ct);
+        if (entity is null)
         {
-            throw new ArgumentException("File size exceeds 5MB limit.", nameof(file));
+            throw new InvalidOperationException("File not found.");
         }
 
-        // בדיקת סיומת קובץ לתמונות
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
-        {
-            throw new ArgumentException("Only image files are allowed (.jpg, .jpeg, .png, .gif, .webp).", nameof(file));
-        }
+        entity.FileName = newData.FileName;
+        entity.FileType = newData.FileType;
+        entity.UploadDate = newData.UploadDate;
+        entity.FilePath = newData.FilePath;
 
-        var uploadsFolder = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "uploads");
-
-        if (!Directory.Exists(uploadsFolder))
-        {
-            Directory.CreateDirectory(uploadsFolder);
-        }
-
-        var fileName = $"{Guid.NewGuid()}{extension}";
-        var filePath = Path.Combine(uploadsFolder, fileName);
-
-        await using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        // URL יחסי שניתן להגיש דרך StaticFiles
-        var relativeUrl = $"/uploads/{fileName}";
-        return relativeUrl;
+        await _context.SaveChangesAsync(ct);
     }
 }
 
