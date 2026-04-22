@@ -183,7 +183,3 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 | **Project** | POST | `/api/project/user/{userId}` | הוספת פרויקט חדש (כולל תמונה) |
 | **Project** | DELETE | `/api/project/{id}` | מחיקת פרויקט קיים |
 | **File** | POST | `/api/file/upload` | העלאת קבצים עם ולידציית סוג וגודל |
-
-### 👩‍💻 אחריות
-
-שכבת ה־**BLL (חלק 2)** פותחה על ידי **נועה**, בהתאם לחלוקת התפקידים המוגדרת בטבלת ה־Team Roles למעלה.
