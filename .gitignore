@@ -1,0 +1,17 @@
+# Build results
+bin/
+obj/
+out/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# User secrets
+secrets.json
+appsettings.Development.json
+
+# Don't ignore appsettings.json if you want to share base config (optional)
+# !appsettings.json
