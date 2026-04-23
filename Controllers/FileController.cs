@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using student_profile.BLL.Interfaces;
@@ -6,6 +7,7 @@ namespace student_profile.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class FileController : ControllerBase
 {
     private readonly IFileService _fileService;

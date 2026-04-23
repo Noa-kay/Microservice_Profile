@@ -161,3 +161,8 @@ C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\obj\Deb
 C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\obj\Debug\net9.0\student_profile.genruntimeconfig.cache
 C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\obj\Debug\net9.0\ref\student_profile.dll
 C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\obj\Debug\net9.0\student_profile.sourcelink.json
+C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\AutoMapper.dll
+C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
+C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
