@@ -77,7 +77,6 @@ public class ProjectsController : ControllerBase
         {
             return Forbid();
         }
-
         var projects = await _projectService.GetProjectsByUserIdAsync(userId, cancellationToken);
         return Ok(projects);
     }
@@ -94,7 +93,6 @@ public class ProjectsController : ControllerBase
         {
             return Forbid();
         }
-
         var created = await _projectService.AddProjectAsync(project, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -129,7 +127,6 @@ public class ProjectsController : ControllerBase
         {
             return Forbid();
         }
-
         project.Id = id;
         var updated = await _projectService.UpdateProjectAsync(project, cancellationToken);
         return Ok(updated);
