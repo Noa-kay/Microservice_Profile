@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using student_profile.Data.Context;
 using student_profile.Data.Models;
@@ -11,15 +13,45 @@ public interface IFileService
     Task SaveFileAsync(UserFileDto file, CancellationToken ct = default);
     Task DeleteDocumentAsync(Guid documentId, CancellationToken ct = default);
     Task UpdateDocumentDetailsAsync(Guid documentId, UserFileDto newData, CancellationToken ct = default);
+    Task<string> UploadFileAsync(IFormFile file, CancellationToken ct = default);
 }
 
 public class FileService : IFileService
 {
     private readonly AppDbContext _context;
+    private readonly IWebHostEnvironment _env;
 
-    public FileService(AppDbContext context)
+    public FileService(AppDbContext context, IWebHostEnvironment env)
     {
         _context = context;
+        _env = env;
+    }
+
+    public async Task<string> UploadFileAsync(IFormFile file, CancellationToken ct = default)
+    {
+        if (file is null || file.Length == 0)
+        {
+            throw new ArgumentException("No file uploaded.");
+        }
+
+        var webRoot = _env.WebRootPath;
+        if (string.IsNullOrEmpty(webRoot))
+        {
+            webRoot = Path.Combine(_env.ContentRootPath, "wwwroot");
+        }
+
+        Directory.CreateDirectory(webRoot);
+        var uploadsDir = Path.Combine(webRoot, "uploads");
+        Directory.CreateDirectory(uploadsDir);
+
+        var ext = Path.GetExtension(file.FileName);
+        var fileName = $"{Guid.NewGuid():N}{ext}";
+        var physicalPath = Path.Combine(uploadsDir, fileName);
+
+        await using var stream = new FileStream(physicalPath, FileMode.Create, FileAccess.Write);
+        await file.CopyToAsync(stream, ct);
+
+        return $"/uploads/{fileName}";
     }
 
     public async Task<IEnumerable<UserFileDto>> GetAllDocumentsAsync(Guid userId, CancellationToken ct = default)

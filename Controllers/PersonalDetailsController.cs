@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using student_profile.BLL;
 using student_profile.DTOs;
@@ -7,7 +6,6 @@ namespace student_profile.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class PersonalDetailsController : ControllerBase
 {
     private readonly IPersonalDetailsService _personalDetailsService;

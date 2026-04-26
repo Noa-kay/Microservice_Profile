@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using student_profile.BLL;
 using student_profile.DTOs;
@@ -7,7 +6,6 @@ namespace student_profile.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -38,7 +36,6 @@ public class UsersController : ControllerBase
     /// Create a new user.
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<UserDto>> Create(UserDto user, CancellationToken cancellationToken)
     {

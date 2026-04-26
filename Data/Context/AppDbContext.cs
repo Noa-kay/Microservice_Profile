@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<ChatHistory> ChatHistories { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<UserFile> Files { get; set; } = null!;
+    public DbSet<Resume> Resumes { get; set; } = null!;
     public DbSet<PersonalDetails> PersonalDetails { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -97,5 +98,19 @@ public class AppDbContext : DbContext
             .WithOne(u => u.PersonalDetails)
             .HasForeignKey<PersonalDetails>(pd => pd.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Resume: UserId → User (One-to-Many)
+        modelBuilder.Entity<Resume>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Resume: FileId → File (One-to-One Optional)
+        modelBuilder.Entity<Resume>()
+            .HasOne(r => r.ExportedFile)
+            .WithOne()
+            .HasForeignKey<Resume>(r => r.FileId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

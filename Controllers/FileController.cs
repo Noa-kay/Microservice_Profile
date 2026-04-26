@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using student_profile.BLL.Interfaces;
+using student_profile.BLL;
 
 namespace student_profile.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class FileController : ControllerBase
 {
     private readonly IFileService _fileService;
@@ -18,27 +16,27 @@ public class FileController : ControllerBase
     }
 
     // POST: /api/file/upload
-    [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] IFormFile file)
+   [HttpPost("upload")]
+[Consumes("multipart/form-data")]
+public async Task<IActionResult> Upload(IFormFile file)
+{
+    if (file == null || file.Length == 0)
     {
-        if (file == null || file.Length == 0)
-        {
-            return BadRequest("No file uploaded.");
-        }
+        return BadRequest("No file uploaded.");
+    }
 
-        try
-        {
-            var url = await _fileService.UploadFileAsync(file);
-            return Ok(new { url });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while uploading the file.");
-        }
+    try
+    {
+        var url = await _fileService.UploadFileAsync(file);
+        return Ok(new { url });
+    }
+    catch (ArgumentException ex)
+    {
+        return BadRequest(ex.Message);
+    }
+    catch (Exception)
+    {
+        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while uploading the file.");
     }
 }
-
+}

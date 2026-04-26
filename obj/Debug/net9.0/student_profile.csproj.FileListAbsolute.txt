@@ -166,3 +166,4 @@ C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Deb
 C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\user\Desktop\למידה מרחוק\פרויקט\student_profile\bin\Debug\net9.0\student_profile.staticwebassets.runtime.json

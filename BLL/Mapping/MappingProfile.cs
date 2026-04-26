@@ -18,10 +18,11 @@ public class MappingProfile : Profile
         CreateMap<Skill, SkillDto>().ReverseMap();
         CreateMap<SkillToUser, SkillToUserDto>().ReverseMap();
 
-        // User -> StudentProfileDto (רק ה-Id; שאר השדות מגיעים מ-PersonalDetails/Skills)
+        // User -> StudentProfileDto
         CreateMap<User, StudentProfileDto>()
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
-            .ForAllOtherMembers(opt => opt.Ignore());
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => 
+                dest.UserId == src.Id));
 
         // PersonalDetails <-> PersonalDetailsDto
         CreateMap<PersonalDetails, PersonalDetailsDto>().ReverseMap();
@@ -41,7 +42,5 @@ public class MappingProfile : Profile
         // ChatHistory / Message <-> DTOs
         CreateMap<ChatHistory, ChatHistoryDto>().ReverseMap();
         CreateMap<Message, MessageDto>().ReverseMap();
-            
-        // ניתן להוסיף כאן מיפויים נוספים ככל שהפרויקט יגדל
     }
 }
