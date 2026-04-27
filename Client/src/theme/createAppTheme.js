@@ -38,6 +38,22 @@ function getPalette(mode) {
   };
 }
 
+/**
+ * כפתורים במצב בהיר — משפחה אחת: טקסט כמעט שחור על רקע חום-בהיר / קרם (בלי גוון כחול).
+ */
+const SAND_BTN = {
+  text: '#141210',
+  border: 'rgba(74, 60, 48, 0.24)',
+  /** רקע בהיר (מסגרת / טאב לא פעיל) */
+  surface: '#faf7f2',
+  /** מילוי כפתור מלא — חום בהיר נוטה ללבן */
+  filled: '#ebe3d8',
+};
+
+/** מעבר עכבר: חום מעט כהה יותר (לא כחול) */
+const SAND_BTN_HOVER = '#dfd4c6';
+const SAND_BTN_HOVER_BORDER = 'rgba(74, 60, 48, 0.38)';
+
 export default function createAppTheme(mode) {
   const isDark = mode === 'dark';
   const base = createTheme({
@@ -66,7 +82,7 @@ export default function createAppTheme(mode) {
       },
       button: {
         textTransform: 'none',
-        fontWeight: 500,
+        fontWeight: 700,
         fontFamily: 'var(--font-family-base)',
       },
     },
@@ -104,31 +120,203 @@ export default function createAppTheme(mode) {
         },
         styleOverrides: {
           root: {
-            borderRadius: 'var(--radius-pill)',
+            borderRadius: 12,
             textTransform: 'none',
-            fontWeight: 'var(--btn-font-weight)',
+            fontWeight: 700,
+            boxShadow: 'none',
+            ...(isDark
+              ? {}
+              : {
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  '& .MuiButton-startIcon, & .MuiButton-endIcon': {
+                    color: 'inherit',
+                  },
+                }),
           },
-          contained: ({ theme }) => ({
-            backgroundColor: isDark ? theme.palette.primary.main : 'var(--btn-primary-bg)',
-            color: isDark ? theme.palette.primary.contrastText : 'var(--btn-primary-text)',
-            '&:hover': {
-              backgroundColor: isDark ? theme.palette.primary.light : 'var(--btn-primary-hover-bg)',
-            },
-            '&.Mui-disabled': {
-              backgroundColor: isDark ? theme.palette.action.disabledBackground : 'var(--btn-primary-disabled-bg)',
-              color: isDark ? theme.palette.action.disabled : 'var(--btn-primary-disabled-text)',
-            },
-          }),
-          outlined: ({ theme }) => ({
-            borderColor: isDark ? alpha(theme.palette.primary.light, 0.56) : 'var(--btn-secondary-border)',
-            color: isDark ? theme.palette.primary.light : 'var(--btn-secondary-text)',
-            '&:hover': {
-              borderColor: isDark ? alpha(theme.palette.primary.light, 0.82) : 'var(--btn-secondary-hover-border)',
-              backgroundColor: isDark ? alpha(theme.palette.primary.light, 0.12) : 'var(--btn-secondary-hover-bg)',
-            },
-          }),
+          ...(isDark
+            ? {
+                contained: ({ theme }) => ({
+                  backgroundColor: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.light,
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: theme.palette.action.disabledBackground,
+                    color: theme.palette.action.disabled,
+                  },
+                }),
+                outlined: ({ theme }) => ({
+                  borderColor: alpha(theme.palette.primary.light, 0.56),
+                  color: theme.palette.primary.light,
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.light, 0.82),
+                    backgroundColor: alpha(theme.palette.primary.light, 0.12),
+                  },
+                }),
+              }
+            : {
+                contained: {
+                  backgroundColor: SAND_BTN.filled,
+                  color: SAND_BTN.text,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    boxShadow: 'none',
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: '#e8e4de',
+                    color: 'rgba(20, 18, 16, 0.45)',
+                    borderColor: SAND_BTN.border,
+                  },
+                },
+                containedPrimary: {
+                  backgroundColor: SAND_BTN.filled,
+                  color: SAND_BTN.text,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    boxShadow: 'none',
+                  },
+                },
+                containedSecondary: {
+                  backgroundColor: SAND_BTN.filled,
+                  color: SAND_BTN.text,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    boxShadow: 'none',
+                  },
+                },
+                containedError: {
+                  backgroundColor: SAND_BTN.filled,
+                  color: SAND_BTN.text,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    boxShadow: 'none',
+                  },
+                },
+                containedSuccess: {
+                  backgroundColor: SAND_BTN.filled,
+                  color: SAND_BTN.text,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    boxShadow: 'none',
+                  },
+                },
+                outlined: {
+                  backgroundColor: SAND_BTN.surface,
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    border: `1px solid ${SAND_BTN_HOVER_BORDER}`,
+                    boxShadow: 'none',
+                  },
+                },
+                outlinedPrimary: {
+                  backgroundColor: SAND_BTN.surface,
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    border: `1px solid ${SAND_BTN_HOVER_BORDER}`,
+                  },
+                },
+                outlinedInherit: {
+                  backgroundColor: SAND_BTN.surface,
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                    border: `1px solid ${SAND_BTN_HOVER_BORDER}`,
+                  },
+                },
+                text: {
+                  color: SAND_BTN.text,
+                  border: '1px solid transparent',
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                  },
+                },
+                textPrimary: {
+                  color: SAND_BTN.text,
+                },
+                textInherit: {
+                  color: SAND_BTN.text,
+                  border: '1px solid transparent',
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                  },
+                },
+              }),
         },
       },
+      ...(isDark
+        ? {}
+        : {
+            MuiIconButton: {
+              styleOverrides: {
+                root: {
+                  color: SAND_BTN.text,
+                  backgroundColor: SAND_BTN.filled,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  boxShadow: 'none',
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: '#e8e4de',
+                    color: 'rgba(20, 18, 16, 0.4)',
+                    borderColor: SAND_BTN.border,
+                  },
+                },
+                colorPrimary: {
+                  color: SAND_BTN.text,
+                  backgroundColor: SAND_BTN.filled,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                  },
+                },
+                colorInherit: {
+                  color: SAND_BTN.text,
+                  backgroundColor: SAND_BTN.surface,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                  },
+                },
+              },
+            },
+            MuiChip: {
+              styleOverrides: {
+                root: {
+                  fontWeight: 600,
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                  backgroundColor: SAND_BTN.surface,
+                  '&:hover': {
+                    backgroundColor: SAND_BTN_HOVER,
+                  },
+                },
+                outlined: {
+                  backgroundColor: SAND_BTN.surface,
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                },
+                colorPrimary: {
+                  backgroundColor: SAND_BTN.surface,
+                  color: SAND_BTN.text,
+                  border: `1px solid ${SAND_BTN.border}`,
+                },
+                deleteIcon: {
+                  color: SAND_BTN.text,
+                  '&:hover': {
+                    color: SAND_BTN.text,
+                  },
+                },
+              },
+            },
+          }),
       MuiCard: {
         styleOverrides: {
           root: ({ theme }) => ({
@@ -161,6 +349,14 @@ export default function createAppTheme(mode) {
               borderBottom: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
             }),
           }),
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            height: 3,
+            borderRadius: 999,
+          },
         },
       },
     },

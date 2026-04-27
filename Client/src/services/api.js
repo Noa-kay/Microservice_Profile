@@ -43,6 +43,11 @@ export const getStudentProfile = async (userId) => {
   return response.data
 }
 
+export const updateStudentProfile = async (profileDto) => {
+  const response = await api.put('/student', profileDto)
+  return response.data
+}
+
 export const getProjectsByUserId = async (userId) => {
   const response = await api.get(`/project/user/${userId}`)
   return response.data

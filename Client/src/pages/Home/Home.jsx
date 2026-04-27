@@ -31,9 +31,9 @@ export default function Home() {
 
   return (
     <PageShell>
-      <Grid container spacing={6} alignItems="center">
+      <Grid container spacing={4} alignItems="center">
         <Grid item xs={12} md={6}>
-          <Stack spacing={3}>
+          <Stack spacing={2}>
             <Typography variant="h1">תכנית השמה לנשים בטכנולוגיה</Typography>
 
             <Typography variant="body1" color="text.secondary">
@@ -45,7 +45,7 @@ export default function Home() {
               <Button variant="outlined">לפרטים נוספים</Button>
             </Stack>
 
-            <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap' }}>
+            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <WorkspacePremiumOutlinedIcon fontSize="small" />
                 <Typography variant="body2">ליווי קריירה</Typography>
@@ -63,7 +63,7 @@ export default function Home() {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Card sx={{ backgroundColor: 'secondary.main', borderRadius: '24px', position: 'relative', p: 2 }}>
+          <Card sx={{ backgroundColor: 'secondary.main', borderRadius: '18px', position: 'relative', p: 1.5 }}>
             <Box
               component="img"
               src="/hero-image.svg"
@@ -88,10 +88,10 @@ export default function Home() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={4} mt={4}>
+      <Grid container spacing={3} mt={2}>
         <Grid item xs={12} md={7}>
-          <Card sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5 }}>
               סטטיסטיקה ותהליך
             </Typography>
             <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
@@ -104,7 +104,7 @@ export default function Home() {
         </Grid>
 
         <Grid item xs={12} md={5}>
-          <Card sx={{ p: 3 }}>
+          <Card sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               לוח מועמדות
             </Typography>
@@ -142,7 +142,7 @@ export default function Home() {
         </Grid>
       </Grid>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap', mt: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap', mt: 2 }}>
         {gatewayStatus && <Chip label="מחובר ל-Gateway" color="success" size="small" />}
         {gatewayError && (
           <Alert severity="warning" sx={{ maxWidth: 520 }}>

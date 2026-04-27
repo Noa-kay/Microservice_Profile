@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
@@ -9,6 +9,18 @@ import SendIcon from '@mui/icons-material/Send'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import PersonIcon from '@mui/icons-material/Person'
 import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined'
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
+import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined'
+import {
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+} from '@mui/material'
 import { useAuth } from '../context/AuthContext'
 import {
   API_BASE_URL,
@@ -25,6 +37,7 @@ import {
   saveUserFile,
   sendChatMessageWithReply,
   updatePersonalDetails,
+  updateStudentProfile,
   updateUserFile,
   updateUserSkills,
   uploadFileBinary,
@@ -32,11 +45,82 @@ import {
 import ProjectList from '../components/ProjectList'
 
 const profileSections = [
-  { key: 'personal', label: 'Profile', icon: PersonOutlineOutlinedIcon },
-  { key: 'skills', label: 'Skills & Portfolio', icon: SchoolOutlinedIcon },
-  { key: 'files', label: 'Files', icon: FolderOpenOutlinedIcon },
-  { key: 'ai', label: 'AI Studio', icon: SmartToyOutlinedIcon },
+  { key: 'personal', label: 'פרופיל', icon: PersonOutlineOutlinedIcon },
+  { key: 'skills', label: 'תיק עבודות ורזומה', icon: SchoolOutlinedIcon },
+  { key: 'files', label: 'קבצים', icon: FolderOpenOutlinedIcon },
+  { key: 'ai', label: 'בוט AI', icon: SmartToyOutlinedIcon },
 ]
+
+/** שמות מיומנויות נפוצים באנגלית — תצוגה בעברית (השמירה בשרת נשארת לפי הנתונים). */
+const SKILL_DISPLAY_HE = Object.freeze({
+  javascript: "ג'אווהסקריפט",
+  js: "ג'אווהסקריפט",
+  typescript: 'טייפסקריפט',
+  ts: 'טייפסקריפט',
+  react: 'ריאקט',
+  angular: 'אנגולר',
+  vue: 'Vue.js',
+  vuejs: 'Vue.js',
+  nodejs: 'Node.js',
+  node: 'Node.js',
+  html: 'HTML',
+  css: 'CSS',
+  sass: 'Sass',
+  scss: 'SCSS',
+  sql: 'SQL',
+  postgresql: 'PostgreSQL',
+  postgres: 'PostgreSQL',
+  mysql: 'MySQL',
+  mongodb: 'MongoDB',
+  redis: 'Redis',
+  docker: 'דוקר',
+  kubernetes: 'קוברנטיס',
+  aws: 'AWS',
+  azure: 'Azure',
+  gcp: 'Google Cloud',
+  git: 'גיט',
+  github: 'גיטהאב',
+  csharp: 'סי שארפ',
+  'c#': 'סי שארפ',
+  dotnet: '.NET',
+  php: 'PHP',
+  python: 'פייתון',
+  java: 'ג׳אווה',
+  kotlin: 'קוטלין',
+  swift: 'סוויפט',
+  go: 'גו',
+  golang: 'גו',
+  rust: 'ראסט',
+  ruby: 'רובי',
+  rails: 'Ruby on Rails',
+  flutter: 'פלאטר',
+  dart: 'דארט',
+  figma: 'פיגמה',
+  mui: 'Material UI',
+  bootstrap: 'בוטסטרפ',
+  tailwind: 'טיילווינד CSS',
+  tailwindcss: 'טיילווינד CSS',
+  excel: 'אקסל',
+  powerbi: 'Power BI',
+  jquery: 'jQuery',
+  webpack: 'Webpack',
+  vite: 'Vite',
+  'c++': 'סי פלוס פלוס',
+  cpp: 'סי פלוס פלוס',
+})
+
+function skillNameForDisplay(rawName, fallbackSkillId) {
+  const trimmed =
+    rawName != null && String(rawName).trim() !== '' ? String(rawName).trim() : ''
+  if (trimmed) {
+    const lower = trimmed.toLowerCase()
+    const compact = lower.replace(/\s+/g, '').replace(/\./g, '')
+    return SKILL_DISPLAY_HE[lower] || SKILL_DISPLAY_HE[compact] || trimmed
+  }
+  return fallbackSkillId
+    ? `מיומנות (${String(fallbackSkillId).slice(0, 8)})`
+    : 'מיומנות'
+}
 
 const buildApiOrigin = () => API_BASE_URL.replace(/\/api\/?$/, '')
 
@@ -95,10 +179,16 @@ function ProfilePage() {
   const [projectCoverFile, setProjectCoverFile] = useState(null)
   const [isSavingProject, setIsSavingProject] = useState(false)
   const [projects, setProjects] = useState([])
+  const [manualSkillInput, setManualSkillInput] = useState('')
+  const [manualSkills, setManualSkills] = useState([])
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [isConfirmDeleting, setIsConfirmDeleting] = useState(false)
   const navigate = useNavigate()
+  const portfolioCoverInputId = useId()
+  const profileFilesUploadId = useId()
 
   useEffect(() => {
     if (selectedSection === 'projects') {
@@ -171,7 +261,7 @@ function ProfilePage() {
     const loadProfileArea = async () => {
       if (!user?.userId) {
         if (isMounted) {
-          setError('Could not extract user id from token claims.')
+          setError('לא ניתן לזהות את המשתמש מהאסימון. נסו להתחבר מחדש.')
           setIsLoading(false)
         }
         return
@@ -206,7 +296,7 @@ function ProfilePage() {
         }
         if (!historyId) {
           setError(
-            'Chat session could not be started. Check that the API is running, then refresh.',
+            'לא ניתן להתחיל שיחה. ודאו שהשרת פועל ורעננו את הדף.',
           )
         }
       }
@@ -254,7 +344,7 @@ function ProfilePage() {
           setError(
             error?.response?.data?.message ||
               error?.response?.data ||
-              'Failed to load student profile.',
+              'טעינת הפרופיל נכשלה.',
           )
         }
       } finally {
@@ -313,9 +403,9 @@ function ProfilePage() {
         address: updated.address || '',
         bio: updated.bio || '',
       })
-      showSuccess('Profile updated successfully.')
+      showSuccess('הפרטים האישיים נשמרו בהצלחה.')
     } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to update profile details.')
+      setError(requestError?.response?.data || 'שמירת הפרטים האישיים נכשלה.')
     } finally {
       setIsSavingDetails(false)
     }
@@ -332,6 +422,25 @@ function ProfilePage() {
           : skill,
       ),
     )
+  }
+
+  const addManualSkill = () => {
+    const value = manualSkillInput.trim()
+    if (!value) {
+      return
+    }
+    const duplicateInManual = manualSkills.some(
+      (item) => item.toLowerCase() === value.toLowerCase(),
+    )
+    if (duplicateInManual) {
+      return
+    }
+    setManualSkills((previous) => [...previous, value])
+    setManualSkillInput('')
+  }
+
+  const removeManualSkill = (name) => {
+    setManualSkills((previous) => previous.filter((item) => item !== name))
   }
 
   const updateYears = (skillId, years) => {
@@ -355,6 +464,14 @@ function ProfilePage() {
     setIsSavingSkills(true)
     setError('')
     try {
+      const selectedSkillNames = userSkills
+        .filter((skill) => skill.isSelected)
+        .map((skill) => {
+          const idx = userSkills.findIndex((s) => s.skillId === skill.skillId)
+          return profile?.skills?.[idx] || ''
+        })
+        .filter(Boolean)
+
       const selectedSkills = userSkills
         .filter((skill) => skill.isSelected)
         .map((skill) => ({
@@ -364,9 +481,34 @@ function ProfilePage() {
         }))
 
       await updateUserSkills(user.userId, selectedSkills)
-      showSuccess('Skills saved successfully.')
+      if (manualSkills.length > 0 || selectedSkillNames.length > 0) {
+        await updateStudentProfile({
+          userId: user.userId,
+          name: personalForm.name || '',
+          email: personalForm.email || '',
+          phone: personalForm.phone || '',
+          address: personalForm.address || '',
+          bio: personalForm.bio || '',
+          skills: Array.from(new Set([...selectedSkillNames, ...manualSkills])),
+        })
+      }
+      const [nextProfile, nextUserSkills] = await Promise.all([
+        getStudentProfile(user.userId).catch(() => null),
+        getUserSkills(user.userId).catch(() => []),
+      ])
+      setProfile(nextProfile || profile)
+      setUserSkills(
+        Array.isArray(nextUserSkills)
+          ? nextUserSkills.map((skill) => ({
+              ...skill,
+              isSelected: true,
+            }))
+          : [],
+      )
+      setManualSkills([])
+      showSuccess('המיומנויות נשמרו בהצלחה.')
     } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to save skills.')
+      setError(requestError?.response?.data || 'שמירת המיומנויות נכשלה.')
     } finally {
       setIsSavingSkills(false)
     }
@@ -407,28 +549,56 @@ function ProfilePage() {
         filePath: uploadResponse?.url || null,
       })
       await reloadFiles()
-      showSuccess('File uploaded successfully.')
+      showSuccess('הקובץ הועלה בהצלחה.')
     } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to upload file.')
+      setError(requestError?.response?.data || 'העלאת הקובץ נכשלה.')
     } finally {
       setIsUploadingFile(false)
       event.target.value = ''
     }
   }
 
-  const handleDeleteFile = async (documentId) => {
+  const handleDeleteFile = (documentId) => {
+    setConfirmDelete({ type: 'file', id: documentId })
+  }
+
+  const handleCloseConfirmDelete = () => {
+    if (!isConfirmDeleting) {
+      setConfirmDelete(null)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) {
+      return
+    }
+    setIsConfirmDeleting(true)
     setError('')
     try {
-      await deleteUserFile(documentId)
+      if (confirmDelete.type === 'file') {
+        await deleteUserFile(confirmDelete.id)
       await reloadFiles()
-      showSuccess('File deleted.')
+        showSuccess('הקובץ נמחק.')
+      } else {
+        await deleteProject(confirmDelete.id)
+        await reloadProjects()
+        showSuccess('הפרויקט הוסר.')
+      }
+      setConfirmDelete(null)
     } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to delete file.')
+      setError(
+        requestError?.response?.data ||
+          (confirmDelete.type === 'file'
+            ? 'מחיקת הקובץ נכשלה.'
+            : 'מחיקת הפרויקט נכשלה.'),
+      )
+    } finally {
+      setIsConfirmDeleting(false)
     }
   }
 
   const handleEditFile = async (file) => {
-    const nextName = window.prompt('New file name', file.fileName)
+    const nextName = window.prompt('שם קובץ חדש', file.fileName)
     if (!nextName || nextName.trim() === '' || nextName === file.fileName) {
       return
     }
@@ -440,9 +610,9 @@ function ProfilePage() {
         fileName: nextName.trim(),
       })
       await reloadFiles()
-      showSuccess('File updated.')
+      showSuccess('שם הקובץ עודכן.')
     } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to update file.')
+      setError(requestError?.response?.data || 'עדכון הקובץ נכשל.')
     }
   }
 
@@ -477,7 +647,7 @@ function ProfilePage() {
         }
       }
       if (!hid) {
-        setError('Could not start a chat session. Is the API running? Try refreshing the page.')
+        setError('לא ניתן להתחיל שיחה. ודאו שהשרת פועל ורעננו את הדף.')
         return
       }
 
@@ -497,7 +667,7 @@ function ProfilePage() {
       persistChatMessages(nextMessages)
       setChatDraft('')
     } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to send message.')
+      setError(requestError?.response?.data || 'שליחת ההודעה נכשלה.')
     } finally {
       setIsSubmittingMessage(false)
     }
@@ -517,7 +687,7 @@ function ProfilePage() {
 
     const title = projectForm.title.trim()
     if (!title) {
-      setError('Project title is required.')
+      setError('נדרשת כותרת לפרויקט.')
       return
     }
 
@@ -546,30 +716,20 @@ function ProfilePage() {
       setProjectForm(emptyProjectForm)
       setProjectCoverFile(null)
       await reloadProjects()
-      showSuccess('Project added to your profile.')
+      showSuccess('הפרויקט נוסף לתיק.')
     } catch (requestError) {
       setError(
         requestError?.response?.data ||
           requestError?.message ||
-          'Failed to add project.',
+          'הוספת הפרויקט נכשלה.',
       )
     } finally {
       setIsSavingProject(false)
     }
   }
 
-  const handleDeleteProject = async (projectId) => {
-    if (!window.confirm('Delete this project?')) {
-      return
-    }
-    setError('')
-    try {
-      await deleteProject(projectId)
-      await reloadProjects()
-      showSuccess('Project removed.')
-    } catch (requestError) {
-      setError(requestError?.response?.data || 'Failed to delete project.')
-    }
+  const handleDeleteProject = (projectId) => {
+    setConfirmDelete({ type: 'project', id: projectId })
   }
 
   const resumePreviewText = useMemo(() => {
@@ -579,76 +739,98 @@ function ProfilePage() {
         ? selectedSkills
             .map((skill) => {
               const idx = userSkills.findIndex((s) => s.skillId === skill.skillId)
-              const label =
-                idx >= 0 && profile?.skills?.[idx]
-                  ? profile.skills[idx]
-                  : String(skill.skillId).slice(0, 8)
-              return `- ${label} (${skill.yearsOfExperience}y)`
+              const raw =
+                idx >= 0 && profile?.skills?.[idx] ? profile.skills[idx] : ''
+              const label = skillNameForDisplay(raw, skill.skillId)
+              return `- ${label} (${skill.yearsOfExperience} שנות ניסיון)`
             })
             .join('\n')
-        : '- No skills selected yet'
+        : '- לא נבחרו מיומנויות'
 
     return [
-      `Full Name: ${personalForm.name || '-'}`,
-      `Email: ${personalForm.email || '-'}`,
-      `Phone: ${personalForm.phone || '-'}`,
-      `Address: ${personalForm.address || '-'}`,
+      `שם מלא: ${personalForm.name || '-'}`,
+      `דוא״ל: ${personalForm.email || '-'}`,
+      `טלפון: ${personalForm.phone || '-'}`,
+      `כתובת: ${personalForm.address || '-'}`,
       '',
-      'Bio',
+      'אודות',
       personalForm.bio || '-',
       '',
-      'Skills',
+      'מיומנויות',
       skillLines,
       '',
-      'Projects',
+      'פרויקטים',
       ...(projects.length > 0
-        ? projects.map((project) => `- ${project.title || project.projectName || 'Untitled Project'}`)
-        : ['- No projects yet']),
+        ? projects.map(
+            (project) =>
+              `- ${project.title || project.projectName || 'פרויקט ללא כותרת'}`,
+          )
+        : ['- אין פרויקטים עדיין']),
     ].join('\n')
   }, [personalForm, userSkills, projects, profile?.skills])
 
   const handleCopyResumePreview = async () => {
     try {
       await navigator.clipboard.writeText(resumePreviewText)
-      showSuccess('Resume text copied — paste it into the chat or an AI tool.')
+      showSuccess('הטקסט הועתק — ניתן להדביק בצ׳אט או במסמך.')
     } catch {
-      setError('Could not copy to clipboard.')
+      setError('לא ניתן להעתיק ללוח.')
     }
   }
 
   return (
-    <section className="profile-area page">
+    <section className="profile-area page" dir="rtl" lang="he">
       <div className="profile-area__header">
-        <div>
-          <h2>Personal Area</h2>
-          <p>Manage your profile, skills &amp; portfolio, files and AI resume studio.</p>
+        <div className="profile-area__header-logout-wrap">
+          <Button
+            type="button"
+            variant="contained"
+            size="medium"
+            startIcon={<LogoutOutlinedIcon />}
+            onClick={handleLogout}
+            sx={{
+              fontWeight: 800,
+              px: 2.5,
+              '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+            }}
+          >
+            יציאה מהמערכת
+          </Button>
         </div>
-        <button className="btn-primary" onClick={handleLogout}>
-          Logout
-        </button>
+        <div className="profile-area__header-center">
+          <h2 className="profile-area__title">אזור אישי</h2>
+          <p className="profile-area__subtitle">
+            ניהול פרופיל, תיק עבודות ומיומנויות, קבצים וסטודיו AI לקורות חיים.
+          </p>
+        </div>
       </div>
 
-      {isLoading ? <p>Loading profile...</p> : null}
-      {error ? <p className="error-text">{error}</p> : null}
-      {successMessage ? <p className="success-text">{successMessage}</p> : null}
+      {isLoading ? <p>טוען פרופיל…</p> : null}
+      {error ? <div className="status-card status-card--error">{error}</div> : null}
+      {successMessage ? <div className="status-card status-card--success">{successMessage}</div> : null}
 
       <div className="profile-area__content">
         <aside className="profile-sidebar">
           {profileSections.map((section) => {
             const Icon = section.icon
+            const active = selectedSection === section.key
             return (
-              <button
+              <Button
                 key={section.key}
-                className={
-                  selectedSection === section.key
-                    ? 'profile-sidebar__item is-active'
-                    : 'profile-sidebar__item'
-                }
+                type="button"
+                variant={active ? 'contained' : 'outlined'}
                 onClick={() => setSelectedSection(section.key)}
+                startIcon={<Icon fontSize="small" />}
+                sx={{
+                  flex: '1 1 190px',
+                  minHeight: 48,
+                  borderRadius: 2,
+                  py: 1,
+                  '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+                }}
               >
-                <Icon fontSize="small" />
-                <span>{section.label}</span>
-              </button>
+                {section.label}
+              </Button>
             )
           })}
         </aside>
@@ -656,52 +838,195 @@ function ProfilePage() {
         <div className="profile-panel">
           {selectedSection === 'personal' ? (
             <div className="profile-card">
-              <h3>Personal Details</h3>
+              <h3>פרטים אישיים</h3>
               <div className="profile-form-grid">
                 <label>
-                  Full Name
+                  שם מלא
                   <input value={personalForm.name} onChange={handlePersonalChange('name')} />
                 </label>
                 <label>
-                  Email
-                  <input value={personalForm.email} onChange={handlePersonalChange('email')} />
+                  דוא״ל
+                  <input
+                    type="email"
+                    value={personalForm.email}
+                    onChange={handlePersonalChange('email')}
+                    dir="ltr"
+                  />
                 </label>
                 <label>
-                  Phone
+                  טלפון
                   <input value={personalForm.phone} onChange={handlePersonalChange('phone')} />
                 </label>
                 <label>
-                  Address
+                  כתובת
                   <input value={personalForm.address} onChange={handlePersonalChange('address')} />
                 </label>
               </div>
               <label className="profile-form-textarea">
-                Biography
+                אודות (ביוגרפיה)
                 <textarea value={personalForm.bio} onChange={handlePersonalChange('bio')} rows={5} />
               </label>
-              <button
-                className="btn-primary"
+              <div className="profile-save-wrap">
+                <Button
+                  type="button"
+                  variant="contained"
+                  size="large"
+                  startIcon={<SaveOutlinedIcon />}
                 onClick={handleSavePersonalDetails}
                 disabled={isSavingDetails}
-              >
-                <SaveOutlinedIcon fontSize="small" /> Save Changes
-              </button>
+                  sx={{
+                    minWidth: 280,
+                    fontWeight: 800,
+                    py: 1.25,
+                    px: 3,
+                    borderRadius: 2,
+                    '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+                  }}
+                >
+                  שמירת שינויים בפרופיל
+                </Button>
+              </div>
             </div>
           ) : null}
 
           {selectedSection === 'skills' ? (
             <div className="profile-card skills-portfolio-card">
-              <h3>Skills &amp; Portfolio</h3>
+              <h3>תיק עבודות ומיומנויות</h3>
               <p className="muted-text">
-                Show what you know (skills) and what you have built (portfolio projects) in one place.
+                למעלה: רשימת הפרויקטים שלך. מתחתיה: טופס להוספת פרויקט. בסוף העמוד: מיומנויות —
+                שמרו לאחר עדכון.
               </p>
 
+              <div className="portfolio-layout" id="my-portfolio-heading">
+                <section className="portfolio-projects-panel" aria-labelledby="portfolio-list-title">
+                  <div className="portfolio-projects-panel__head">
+                    <h4 className="portfolio-projects-panel__title" id="portfolio-list-title">
+                      הפרויקטים שלך
+                    </h4>
+                    <p className="muted-text portfolio-projects-panel__subtitle">
+                      {projects.length === 0
+                        ? 'עדיין אין פרויקטים — ניתן להוסיף מהטופס למטה.'
+                        : `${projects.length} פרויקטים בתיק`}
+                    </p>
+                    </div>
+                  <ProjectList projects={projects} onDelete={handleDeleteProject} />
+                </section>
+
+                <section className="portfolio-add-panel" aria-labelledby="portfolio-add-title">
+                  <div className="portfolio-add-panel__header">
+                    <h4 className="portfolio-add-panel__title" id="portfolio-add-title">
+                      הוספת פרויקט לתיק
+                </h4>
+                    <p className="portfolio-add-panel__hint muted-text">
+                      מלאו את הפרטים ושמרו — הפרויקט יתווסף לרשימה למעלה.
+                    </p>
+                  </div>
+                  <div className="portfolio-form-grid">
+                    <label className="portfolio-field portfolio-field--span-2">
+                      כותרת הפרויקט
+                    <input
+                      value={projectForm.title}
+                      onChange={handleProjectFieldChange('title')}
+                        placeholder="למשל: אתר תדמית לעסק"
+                    />
+                  </label>
+                    <label className="portfolio-field">
+                      שם קצר (אופציונלי)
+                    <input
+                      value={projectForm.projectName}
+                      onChange={handleProjectFieldChange('projectName')}
+                        placeholder="שם תצוגה"
+                    />
+                  </label>
+                    <label className="portfolio-field">
+                      קישור GitHub
+                    <input
+                      value={projectForm.gitHubLink}
+                      onChange={handleProjectFieldChange('gitHubLink')}
+                      placeholder="https://github.com/..."
+                        dir="ltr"
+                    />
+                  </label>
+                    <label className="portfolio-field portfolio-field--span-2">
+                      כתובת תמונת כיסוי (URL)
+                    <input
+                      value={projectForm.projectsImages}
+                      onChange={handleProjectFieldChange('projectsImages')}
+                        placeholder="/uploads/... או קישור מלא"
+                        dir="ltr"
+                    />
+                  </label>
+                </div>
+                  <label className="profile-form-textarea portfolio-field--full">
+                    תיאור
+                  <textarea
+                    value={projectForm.description}
+                    onChange={handleProjectFieldChange('description')}
+                    rows={4}
+                      placeholder="מה בניתם? אילו טכנולוגיות? תוצאה מרכזית?"
+                  />
+                </label>
+                  <div className="portfolio-upload-row portfolio-upload-row--stack">
+                    <span className="portfolio-upload-caption">או העלאת תמונת כיסוי מהמחשב</span>
+                  <input
+                      id={portfolioCoverInputId}
+                    type="file"
+                    accept="image/*"
+                      style={{ display: 'none' }}
+                    onChange={(event) => {
+                      setProjectCoverFile(event.target.files?.[0] || null)
+                    }}
+                  />
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      htmlFor={portfolioCoverInputId}
+                      startIcon={<UploadFileOutlinedIcon />}
+                      sx={{
+                        alignSelf: 'flex-start',
+                        py: 1.25,
+                        px: 2,
+                        '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+                      }}
+                    >
+                      בחירת קובץ תמונה
+                    </Button>
+                    {projectCoverFile ? (
+                      <span className="portfolio-file-pill">{projectCoverFile.name}</span>
+                    ) : null}
+                  </div>
+                  <div className="portfolio-form-actions">
+                    <Button
+                  type="button"
+                      variant="contained"
+                      size="large"
+                      startIcon={<SaveOutlinedIcon />}
+                  onClick={handleAddProject}
+                  disabled={isSavingProject}
+                      sx={{
+                        fontWeight: 800,
+                        py: 1.25,
+                        px: 3,
+                        '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+                      }}
+                    >
+                      שמירת פרויקט חדש
+                    </Button>
+                  </div>
+                </section>
+              </div>
+
+              <hr className="portfolio-divider" aria-hidden="true" />
+
               <div className="skills-portfolio-block">
-                <h4 className="skills-portfolio-subtitle">Skills</h4>
+                <h4 className="skills-portfolio-subtitle">מיומנויות</h4>
                 <p className="muted-text skills-portfolio-hint">
-                  Loaded from your <code>skillToUser</code> relation; save with PUT.
+                  סמנו מיומנויות, עדכנו שנות ניסיון והוסיפו חדשות לפי הצורך. לחצו על &quot;שמירת
+                  מיומנויות&quot; כדי לעדכן בשרת.
                 </p>
-                {userSkills.length === 0 ? <p>No skills assigned yet.</p> : null}
+                {userSkills.length === 0 ? (
+                  <p>עדיין לא שויכו מיומנויות לחשבון.</p>
+                ) : null}
                 <div className="skills-table">
                   {userSkills.map((skill, index) => (
                     <div className="skills-row" key={skill.skillId}>
@@ -712,11 +1037,11 @@ function ProfilePage() {
                           onChange={() => toggleSkill(skill.skillId)}
                         />
                         <span>
-                          {profile?.skills?.[index] || `Skill ${skill.skillId.slice(0, 8)}`}
+                          {skillNameForDisplay(profile?.skills?.[index], skill.skillId)}
                         </span>
                       </label>
                       <label className="skills-row__years">
-                        Years
+                        שנות ניסיון
                         <input
                           type="number"
                           min="0"
@@ -724,129 +1049,136 @@ function ProfilePage() {
                           onChange={(event) => updateYears(skill.skillId, event.target.value)}
                         />
                       </label>
-                    </div>
+                </div>
                   ))}
                 </div>
-                <button className="btn-primary" onClick={handleSaveSkills} disabled={isSavingSkills}>
-                  <SaveOutlinedIcon fontSize="small" /> Save Skills
-                </button>
-              </div>
-
-              <hr className="portfolio-divider" aria-hidden="true" />
-
-              <div className="skills-portfolio-block portfolio-block">
-                <h4 className="skills-portfolio-subtitle" id="my-portfolio-heading">
-                  My Portfolio
-                </h4>
-                <p className="muted-text skills-portfolio-hint">
-                  Add projects with{' '}
-                  <code>POST /api/project/user/:userId</code> (JWT required).
-                </p>
-                <div className="profile-form-grid">
-                  <label>
-                    Title
-                    <input
-                      value={projectForm.title}
-                      onChange={handleProjectFieldChange('title')}
-                      placeholder="e.g. Portfolio website"
-                    />
-                  </label>
-                  <label>
-                    Project name (short)
-                    <input
-                      value={projectForm.projectName}
-                      onChange={handleProjectFieldChange('projectName')}
-                      placeholder="Optional display name"
-                    />
-                  </label>
-                  <label>
-                    GitHub link
-                    <input
-                      value={projectForm.gitHubLink}
-                      onChange={handleProjectFieldChange('gitHubLink')}
-                      placeholder="https://github.com/..."
-                    />
-                  </label>
-                  <label>
-                    Cover image URL
-                    <input
-                      value={projectForm.projectsImages}
-                      onChange={handleProjectFieldChange('projectsImages')}
-                      placeholder="/uploads/... or full URL"
-                    />
-                  </label>
-                </div>
-                <label className="profile-form-textarea">
-                  Description
-                  <textarea
-                    value={projectForm.description}
-                    onChange={handleProjectFieldChange('description')}
-                    rows={4}
-                    placeholder="What did you build?"
-                  />
-                </label>
-                <label className="profile-form-cover">
-                  Or upload cover image
+                <div className="skills-add-row">
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => {
-                      setProjectCoverFile(event.target.files?.[0] || null)
-                    }}
+                    value={manualSkillInput}
+                    onChange={(event) => setManualSkillInput(event.target.value)}
+                    placeholder="הוספת מיומנות (למשל: ריאקט, SQL, פייתון)"
                   />
-                </label>
-                <button
-                  className="btn-primary"
-                  type="button"
-                  onClick={handleAddProject}
-                  disabled={isSavingProject}
-                >
-                  <SaveOutlinedIcon fontSize="small" /> Add project
-                </button>
-
-                <div className="projects-section projects-section--inline" aria-labelledby="my-portfolio-heading">
-                  <h3 className="projects-section__list-title">Your projects</h3>
-                  <ProjectList projects={projects} onDelete={handleDeleteProject} />
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    startIcon={<AddCircleOutlineOutlinedIcon />}
+                    onClick={addManualSkill}
+                    sx={{ flexShrink: 0, '& .MuiButton-startIcon': { mr: 0, ml: 1 } }}
+                  >
+                    הוספת מיומנות
+                  </Button>
                 </div>
+                {manualSkills.length > 0 ? (
+                  <div className="manual-skills-list">
+                    {manualSkills.map((name) => (
+                      <Chip
+                        key={name}
+                        label={skillNameForDisplay(name, null)}
+                        onDelete={() => removeManualSkill(name)}
+                        variant="outlined"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="contained"
+                  size="large"
+                  startIcon={<SaveOutlinedIcon />}
+                  onClick={handleSaveSkills}
+                  disabled={isSavingSkills}
+                  sx={{
+                    mt: 1,
+                    fontWeight: 800,
+                    py: 1.25,
+                    px: 3,
+                    '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+                  }}
+                >
+                  שמירת מיומנויות בשרת
+                </Button>
               </div>
             </div>
           ) : null}
 
           {selectedSection === 'files' ? (
-            <div className="profile-card">
+            <div className="profile-card profile-card--files">
               <div className="files-header">
-                <h3>Files</h3>
-                <label className="btn-primary btn-upload">
-                  <UploadFileOutlinedIcon fontSize="small" /> Upload New File
-                  <input type="file" onChange={handleUploadNewFile} disabled={isUploadingFile} />
-                </label>
+                <div>
+                  <h3>קבצים</h3>
+                  <p className="muted-text files-intro">העלאה, הורדה וניהול מסמכים המקושרים לחשבון.</p>
+                </div>
+                <input
+                  id={profileFilesUploadId}
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={handleUploadNewFile}
+                  disabled={isUploadingFile}
+                />
+                <Button
+                  component="label"
+                  variant="contained"
+                  htmlFor={profileFilesUploadId}
+                  disabled={isUploadingFile}
+                  startIcon={<UploadFileOutlinedIcon />}
+                  sx={{
+                    fontWeight: 800,
+                    py: 1.25,
+                    px: 2.5,
+                    '& .MuiButton-startIcon': { mr: 0, ml: 1 },
+                  }}
+                >
+                  {isUploadingFile ? 'מעלה קובץ…' : 'בחירת קובץ להעלאה'}
+                </Button>
               </div>
               <div className="files-table-wrap">
                 <table className="files-table">
                   <thead>
                     <tr>
-                      <th>File Name</th>
-                      <th>Date</th>
-                      <th>Size</th>
-                      <th>Actions</th>
+                      <th>שם קובץ</th>
+                      <th>תאריך</th>
+                      <th>סוג / גודל</th>
+                      <th>פעולות</th>
                     </tr>
                   </thead>
                   <tbody>
                     {files.map((file) => (
                       <tr key={file.id}>
                         <td>{file.fileName}</td>
-                        <td>{new Date(file.uploadDate).toLocaleDateString()}</td>
+                        <td>{new Date(file.uploadDate).toLocaleDateString('he-IL')}</td>
                         <td>{file.fileType || '-'}</td>
                         <td className="file-actions">
-                          <button onClick={() => handleDownloadFile(file.filePath)}>Download</button>
-                          <button onClick={() => handleEditFile(file)}>Edit</button>
-                          <button onClick={() => handleDeleteFile(file.id)}>Delete</button>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleDownloadFile(file.filePath)}
+                          >
+                            הורדת קובץ
+                          </Button>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleEditFile(file)}
+                          >
+                            שינוי שם קובץ
+                          </Button>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleDeleteFile(file.id)}
+                            sx={{ fontWeight: 800 }}
+                          >
+                            מחיקת קובץ
+                          </Button>
                         </td>
                       </tr>
                     ))}
                     {files.length === 0 ? (
                       <tr>
-                        <td colSpan={4}>No files yet.</td>
+                        <td colSpan={4}>אין קבצים עדיין.</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -863,7 +1195,7 @@ function ProfilePage() {
                     <SmartToyOutlinedIcon />
                   </div>
                   <div className="ai-chat-header__text">
-                    <h3 className="ai-chat-header__title">AI Studio</h3>
+                    <h3 className="ai-chat-header__title">סטודיו AI</h3>
                     <p className="ai-chat-header__subtitle">
                       עוזר קריירה — הודעות נשמרות בשרת. ללא מפתח OpenAI בשרת תקבל הסבר איך להפעיל;
                       עם מפתח — תשובות אוטומטיות (הקשר מסיכום הקו״ח מצורף אוטומטית לשליחה).
@@ -894,16 +1226,16 @@ function ProfilePage() {
                         )}
                       </div>
                       <div className="ai-chat-bubble-wrap">
-                        <div className="ai-chat-bubble-meta">
-                          {message.isAssistant ? 'עוזר' : 'את/ה'} ·{' '}
-                          {new Date(message.date).toLocaleString()}
-                        </div>
                         <div
                           className={
                             message.isAssistant ? 'ai-chat-bubble ai-chat-bubble--assistant' : 'ai-chat-bubble ai-chat-bubble--user'
                           }
                         >
                           <p className="ai-chat-bubble__text">{message.messageContent}</p>
+                        </div>
+                        <div className="ai-chat-bubble-meta">
+                          {message.isAssistant ? 'עוזר' : 'את/ה'} ·{' '}
+                          {new Date(message.date).toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -925,33 +1257,39 @@ function ProfilePage() {
                     placeholder="כתוב הודעה… (Enter לשליחה, Shift+Enter לשורה חדשה)"
                     disabled={isSubmittingMessage}
                   />
-                  <button
+                  <IconButton
                     type="button"
-                    className="ai-chat-send"
+                    color="primary"
                     onClick={handleSendMessage}
                     disabled={isSubmittingMessage || !chatDraft.trim()}
-                    title="שלח"
+                    title="שליחת הודעה"
                     aria-label="שלח הודעה"
+                    sx={{ width: 46, height: 46, flexShrink: 0 }}
                   >
                     {isSubmittingMessage ? (
                       <span className="ai-chat-send__spinner" />
                     ) : (
-                      <SendIcon sx={{ fontSize: 20 }} />
+                      <SendIcon sx={{ fontSize: 24 }} />
                     )}
-                  </button>
+                  </IconButton>
                 </div>
               </div>
 
-              <div>
+              <div className="resume-preview-panel">
                 <div className="resume-preview-header">
-                  <h3>Resume summary (from your profile)</h3>
-                  <button type="button" className="btn-secondary" onClick={handleCopyResumePreview}>
-                    Copy text
-                  </button>
+                  <h3>סיכום קורות חיים (מהפרופיל שלך)</h3>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleCopyResumePreview}
+                    sx={{ fontWeight: 800 }}
+                  >
+                    העתקת סיכום ללוח
+                  </Button>
                 </div>
                 <p className="muted-text">
-                  Plain-text snapshot of your profile data. Copy and paste into the chat or export to
-                  PDF elsewhere if needed.
+                  תמונת מצב בטקסט פשוט של הנתונים מהפרופיל. ניתן להדביק בצ׳אט למטה או לייצא
+                  למסמך.
                 </p>
                 <pre className="resume-preview">{resumePreviewText}</pre>
               </div>
@@ -959,6 +1297,45 @@ function ProfilePage() {
           ) : null}
         </div>
       </div>
+
+      <Dialog
+        open={Boolean(confirmDelete)}
+        onClose={handleCloseConfirmDelete}
+        aria-labelledby="confirm-delete-title"
+        aria-describedby="confirm-delete-desc"
+        dir="rtl"
+      >
+        <DialogTitle id="confirm-delete-title">
+          {confirmDelete?.type === 'file' ? 'מחיקת קובץ' : 'מחיקת פרויקט'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-delete-desc">
+            {confirmDelete?.type === 'file'
+              ? 'האם למחוק את הקובץ? לא ניתן לשחזר לאחר המחיקה.'
+              : 'למחוק את הפרויקט? פעולה זו אינה ניתנת לביטול.'}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            type="button"
+            onClick={handleCloseConfirmDelete}
+            disabled={isConfirmDeleting}
+            color="inherit"
+          >
+            ביטול
+          </Button>
+          <Button
+            type="button"
+            onClick={handleConfirmDelete}
+            disabled={isConfirmDeleting}
+            variant="contained"
+            color="error"
+            autoFocus
+          >
+            {isConfirmDeleting ? 'מוחק…' : 'מחק'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </section>
   )
 }
