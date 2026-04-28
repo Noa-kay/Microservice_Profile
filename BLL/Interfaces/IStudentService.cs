@@ -6,5 +6,6 @@ public interface IStudentService
 {
     Task<StudentProfileDto?> GetStudentProfileAsync(Guid userId);
     Task<bool> UpdateStudentProfileAsync(StudentProfileDto dto);
+    Task<bool> NotifyStudentAcceptedAsync(Guid userId);
 }
 

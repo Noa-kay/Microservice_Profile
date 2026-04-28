@@ -8,5 +8,6 @@ public class StudentProfileDto
     public string Phone { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
+    public bool IsAcceptedToWork { get; set; }
     public List<string> Skills { get; set; } = new();
 }

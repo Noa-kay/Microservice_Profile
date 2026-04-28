@@ -11,6 +11,7 @@ public class StudentService : IStudentService
     private readonly IPersonalDetailsRepository _personalDetailsRepository;
     private readonly ISkillRepository _skillRepository;
     private readonly IGenericRepository<SkillToUser> _skillToUserRepository;
+    private readonly IStaff6EventPublisher _staff6EventPublisher;
     private readonly IMapper _mapper;
 
     public StudentService(
@@ -18,12 +19,14 @@ public class StudentService : IStudentService
         IPersonalDetailsRepository personalDetailsRepository,
         ISkillRepository skillRepository,
         IGenericRepository<SkillToUser> skillToUserRepository,
+        IStaff6EventPublisher staff6EventPublisher,
         IMapper mapper)
     {
         _userRepository = userRepository;
         _personalDetailsRepository = personalDetailsRepository;
         _skillRepository = skillRepository;
         _skillToUserRepository = skillToUserRepository;
+        _staff6EventPublisher = staff6EventPublisher;
         _mapper = mapper;
     }
 
@@ -72,6 +75,8 @@ public class StudentService : IStudentService
             // אם אין PersonalDetails למשתמש – כרגע נחזיר false
             return false;
         }
+
+        var wasAcceptedBeforeUpdate = details.IsAcceptedToWork;
 
         // מיפוי השדות הרלוונטיים מה-DTO ל-Entity
         _mapper.Map(dto, details);
@@ -151,6 +156,23 @@ public class StudentService : IStudentService
         // שמירה אחת על ההקשר – כל השינויים (Details + Skills)
         await _personalDetailsRepository.SaveChangesAsync();
 
+        if (!wasAcceptedBeforeUpdate && details.IsAcceptedToWork)
+        {
+            await _staff6EventPublisher.PublishStudentAcceptedAsync(dto.UserId);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> NotifyStudentAcceptedAsync(Guid userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user is null)
+        {
+            return false;
+        }
+
+        await _staff6EventPublisher.PublishStudentAcceptedAsync(userId);
         return true;
     }
 }

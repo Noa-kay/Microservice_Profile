@@ -9,4 +9,5 @@ public class PersonalDetails
     public string Phone { get; set; } = default!;
     public string Address { get; set; } = default!;
     public string Bio { get; set; } = default!;
+    public bool IsAcceptedToWork { get; set; }
 }

@@ -43,6 +43,7 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
 // Services registration
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddHttpClient<IStaff6EventPublisher, Staff6EventPublisher>();
 builder.Services.AddScoped<student_profile.BLL.IProjectService, ProjectService>();
 builder.Services.AddScoped<student_profile.BLL.IFileService, FileService>();
 
