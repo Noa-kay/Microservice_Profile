@@ -21,7 +21,12 @@ public class MappingProfile : Profile
         // User -> StudentProfileDto (רק ה-Id; שאר השדות מגיעים מ-PersonalDetails/Skills)
         CreateMap<User, StudentProfileDto>()
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
-            .ForAllOtherMembers(opt => opt.Ignore());
+            .ForMember(dest => dest.Name, opt => opt.Ignore())
+            .ForMember(dest => dest.Email, opt => opt.Ignore())
+            .ForMember(dest => dest.Phone, opt => opt.Ignore())
+            .ForMember(dest => dest.Address, opt => opt.Ignore())
+            .ForMember(dest => dest.Bio, opt => opt.Ignore())
+            .ForMember(dest => dest.Skills, opt => opt.Ignore());
 
         // PersonalDetails <-> PersonalDetailsDto
         CreateMap<PersonalDetails, PersonalDetailsDto>().ReverseMap();

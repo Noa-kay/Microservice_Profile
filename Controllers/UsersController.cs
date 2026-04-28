@@ -1,3 +1,5 @@
+using MarketingNotificationService.Data.Entities;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using student_profile.BLL;
 using student_profile.DTOs;
@@ -9,10 +11,12 @@ namespace student_profile.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, IPublishEndpoint publishEndpoint)
     {
         _userService = userService;
+        _publishEndpoint = publishEndpoint;
     }
 
     /// <summary>
@@ -33,14 +37,18 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new user.
+    /// Create a new user. Returns the created user and total user count; publishes count to message bus.
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
-    public async Task<ActionResult<UserDto>> Create(UserDto user, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(UserCreatedResult), StatusCodes.Status201Created)]
+    public async Task<ActionResult<UserCreatedResult>> Create(
+        UserDto user,
+        CancellationToken cancellationToken)
     {
-        var created = await _userService.CreateAsync(user, cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        var result = await _userService.CreateAsync(user, cancellationToken);
+        await _publishEndpoint.Publish(
+            new graduates_count(result.TotalUsers, DateTime.UtcNow),
+            cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.User.Id }, result);
     }
 }
-

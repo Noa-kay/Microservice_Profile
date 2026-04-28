@@ -1,5 +1,9 @@
 using AutoMapper;
+using MarketingNotificationService.Data.Entities;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using student_profile.BLL;
 using student_profile.BLL.Interfaces;
 using student_profile.BLL.Repositories;
 using student_profile.BLL.Services;
@@ -24,8 +28,8 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
 // Services registration
 builder.Services.AddScoped<IStudentService, StudentService>();
-builder.Services.AddScoped<IProjectService, ProjectService>();
-builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<student_profile.BLL.IProjectService, student_profile.BLL.ProjectService>();
+builder.Services.AddScoped<student_profile.BLL.IFileService, student_profile.BLL.FileService>();
 
 // Additional BLL services from main branch
 builder.Services.AddScoped<IUserService, UserService>();
@@ -39,7 +43,50 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Add services to the container.
+var serviceSettings = builder.Configuration
+    .GetSection("ServiceSettings")
+    .Get<ServiceSettings>();
+var rabbitMQSettings = builder.Configuration
+    .GetSection("RabbitMQSettings")
+    .Get<RabbitMQSettings>();
+
 builder.Services.AddControllers();
+
+builder.Services.AddMassTransit(configure =>
+{
+    var rabbitSection = builder.Configuration.GetSection("RabbitMq");
+    var host = rabbitSection["Host"] ?? rabbitMQSettings?.Host ?? "localhost";
+    var username = rabbitSection["Username"] ?? "guest";
+    var password = rabbitSection["Password"] ?? "guest";
+    var graduatesEntityName = rabbitSection["GraduatesMessageEntityName"] ?? "graduates-count";
+
+    // ב-Publisher בדרך כלל אין צרכנים
+    configure.AddConsumers(Assembly.GetEntryAssembly());
+
+    configure.UsingRabbitMq((context, configurator) =>
+    {
+        configurator.Host(host, "/", h =>
+        {
+            h.Username(username);
+            h.Password(password);
+        });
+
+        configurator.Message<graduates_count>(x => x.SetEntityName(graduatesEntityName));
+
+        // הגדרת פורמט השמות (Kebab Case)
+        configurator.ConfigureEndpoints(context, 
+            new KebabCaseEndpointNameFormatter(
+                serviceSettings?.ServiceName ?? "student-profile-service", false));
+
+        // הגדרת ניסיונות חוזרים (Retry Policy)
+        configurator.UseMessageRetry(retryConfigurator =>
+        {
+            retryConfigurator.Interval(3, TimeSpan.FromSeconds(5));
+        });
+    });
+});
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

@@ -8,7 +8,8 @@ namespace student_profile.BLL;
 public interface IUserService
 {
     Task<UserDto?> GetByIdAsync(Guid userId, CancellationToken ct = default);
-    Task<UserDto> CreateAsync(UserDto user, CancellationToken ct = default);
+    Task<int> GetTotalUserCountAsync(CancellationToken ct = default);
+    Task<UserCreatedResult> CreateAsync(UserDto user, CancellationToken ct = default);
 }
 
 public class UserService : IUserService
@@ -28,7 +29,10 @@ public class UserService : IUserService
         return entity is null ? null : new UserDto { Id = entity.Id };
     }
 
-    public async Task<UserDto> CreateAsync(UserDto user, CancellationToken ct = default)
+    public Task<int> GetTotalUserCountAsync(CancellationToken ct = default) =>
+        _context.Users.CountAsync(ct);
+
+    public async Task<UserCreatedResult> CreateAsync(UserDto user, CancellationToken ct = default)
     {
         var entity = new User
         {
@@ -39,7 +43,8 @@ public class UserService : IUserService
         await _context.SaveChangesAsync(ct);
 
         user.Id = entity.Id;
-        return user;
+        var totalUsers = await _context.Users.CountAsync(ct);
+        return new UserCreatedResult(user, totalUsers);
     }
 }
 
