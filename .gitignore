@@ -3,6 +3,12 @@ bin/
 obj/
 out/
 
+# Frontend dependencies
+**/node_modules/
+
+# Local build artifacts
+build-check/
+
 # Visual Studio / Rider
 .vs/
 .idea/
