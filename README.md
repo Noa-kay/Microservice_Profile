@@ -1,82 +1,90 @@
-# פרופיל סטודנט (Student Profile)
+# Student Profile
 
-אפליקציית **פרופיל סטודנט** מבוססת מיקרו־שירות: API ב־**ASP.NET Core 7** עם **Entity Framework Core**, ולקוח **React (Vite)** עם **Material UI**. כולל אימות **JWT**, ניהול משתמשים, פרטים אישיים, פרויקטים, כישורים, צ'אט, קבצים ותמונות.
+The **Student Profile** application is a microservice-based system. It features an ASP.NET Core 7 API with Entity Framework Core and a React (Vite) client using Material UI. It includes JWT authentication, user management, personal details, projects, skills, chat, and file/image uploads.
 
-## דרישות מקדימות
+## Prerequisites
 
 - [.NET SDK 7](https://dotnet.microsoft.com/download/dotnet/7.0)
-- [Node.js](https://nodejs.org/) (מומלץ LTS) — ללקוח
-- **SQL Server** (אופציונלי בפיתוח — ראו למטה)
+- [Node.js](https://nodejs.org/) (LTS recommended) for the client.
+- **SQL Server** (optional for development; see below).
 
-## מבנה הפרויקט
+## Project Structure
 
-| תיקייה | תיאור |
-|--------|--------|
-| שורש | Web API (`Program.cs`, `Controllers/`, `BLL/`, `Data/`) |
-| `Client/` | אפליקציית React + Vite |
+| Folder | Description |
+|--------|-------------|
+| Root   | Web API (`Program.cs`, `Controllers/`, `BLL/`, `Data/`) |
+| `Client/` | React + Vite application |
 
-## הגדרת שרת (API)
+## API Setup
 
-### מחרוזת חיבור ו־JWT
+### Connection String and JWT
+Edit `appsettings.json` (or `appsettings.Development.json` if it exists):
 
-ערוך את `appsettings.json` (או השתמש ב־`appsettings.Development.json` אם קיים):
+- **ConnectionStrings:DefaultConnection**: Your SQL Server connection string.
+- **Jwt**: You must set `Issuer`, `Audience`, and `Key` (use a long symmetric key; in production, use a strong random secret).
 
-- **ConnectionStrings:DefaultConnection** — מחרוזת חיבור ל־SQL Server.
-- **Jwt** — חובה להגדיר `Issuer`, `Audience` ו־`Key` (מפתח סימטרי ארוך; בפרודקשן השתמש בסוד אקראי חזק).
+If the connection string is empty or matches the local machine name (`DESKTOP-IV6MTF1\RUTHB`) during **Development**, the server automatically uses an **InMemory database**—useful for quick testing without SQL Server.
 
-אם ב־**Development** מחרוזת החיבור ריקה או תואמת את המכונה המקומית שמוגדרת בקוד (`DESKTOP-IV6MTF1\RUTHB`), השרת עובר אוטומטית ל־**InMemory database** — נוח להרצה מהירה בלי SQL Server.
-
-### הרצת ה־API
-
+### Running the API
 ```bash
 cd /path/to/Microservice_Profile-main
 dotnet run --launch-profile http
+
 ```
 
-ברירת המחדל לפי `Properties/launchSettings.json`:
+The default settings (from `Properties/launchSettings.json`) are:
 
-- HTTP: `http://localhost:5290`
-- פרופיל `https`: גם `https://localhost:7182`
+* HTTP: `http://localhost:5290`
+* HTTPS: `https://localhost:7182`
 
-במצב **Development** זמינים **Swagger UI** ו־**OpenAPI** (בדרך כלל תחת `/swagger`).
+In **Development** mode, **Swagger UI** and **OpenAPI** are available (usually at `/swagger`).
 
-### אימות (Auth)
+### Authentication
 
-- `POST /api/auth/register` — הרשמה
-- `POST /api/auth/login` — התחברות
-- `POST /api/auth/dev-token` — יצירת JWT לפיתוח בלבד (רק כש־`Development`)
+* `POST /api/auth/register` — Register
+* `POST /api/auth/login` — Login
+* `POST /api/auth/dev-token` — Generate a JWT for development (only in `Development` mode).
 
-שאר ה־Controllers ממופים תחת `api/...` (למשל `api/Users`, `api/Projects`, `api/Chat`, `api/Skills` וכו').
+Other controllers are mapped under `api/...` (e.g., `api/Users`, `api/Projects`, `api/Chat`, `api/Skills`).
 
-## הגדרת לקוח (React)
+## React Client Setup
 
-### משתני סביבה
+### Environment Variables
 
-העתק את `Client/.env.example` ל־`Client/.env` (או `.env.local`) והתאם:
+Copy `Client/.env.example` to `Client/.env` (or `.env.local`) and configure:
 
-- **VITE_API_BASE_URL** — חייב להסתיים ב־`/api` (למשל `http://127.0.0.1:5290/api`), אחרת בקשות האימות עלולות לפגוע בנתיב שגוי.
-- אופציונלי: **VITE_DEV_PROXY_TARGET** — יעד לפרוקסי של Vite (ברירת מחדל `http://127.0.0.1:5290`) כשמשתמשים ב־`VITE_API_BASE_URL=/api`.
+* **VITE_API_BASE_URL**: Must end with `/api` (e.g., `http://127.0.0.1:5290/api`).
+* Optional: **VITE_DEV_PROXY_TARGET**: The Vite proxy target (default is `http://127.0.0.1:5290`).
 
-### הרצת הלקוח
+### Running the Client
 
 ```bash
 cd Client
 npm install
 npm run dev
+
 ```
 
-לבנייה לפרודקשן: `npm run build` — הפלט ב־`Client/dist` (השרת מגיש קבצים סטטיים דרך `UseStaticFiles` אם מוגדר בהתאם).
+For production builds, use `npm run build`. The output will be in `Client/dist` (the server serves static files via `UseStaticFiles` if configured).
 
-## אינטגרציות נוספות
+## Additional Integrations
 
-ב־`appsettings.json` קיים קטע **Staff6Events** (נקודת קצה ו־API Key) לפרסום אירועים — יש להחליף ערכי placeholder בסביבה אמיתית.
+The `appsettings.json` file includes a **Staff6Events** section for event publishing. Replace the placeholder values in a real environment.
 
-## פיתוח מהיר (סיכום)
+## Quick Start Summary
 
-1. הגדר `Jwt:Key` ומחרוזת חיבור (או הסתמך על InMemory ב־Development).
-2. `dotnet run --launch-profile http` בשורש הפרויקט.
-3. ב־`Client/`: `npm install && npm run dev`, עם `VITE_API_BASE_URL` מצביע על `http://127.0.0.1:5290/api`.
+1. Set `Jwt:Key` and connection string (or rely on InMemory for development).
+2. Run `dotnet run --launch-profile http` in the project root.
+3. In `Client/`: `npm install && npm run dev`, with `VITE_API_BASE_URL` pointing to `http://127.0.0.1:5290/api`.
 
 ---
 
-פרויקט לימודי/דמו — לפני פריסה יש לחזק סודות JWT, CORS ומדיניות אבטחה בהתאם לסביבה.
+*Note: This is a demo project. Before deploying, ensure you strengthen JWT secrets, CORS, and security policies.*
+
+```
+
+***
+
+האם תרצה שאוסיף לקובץ ה-README חלק של "License" או "Credits" כדי שיהיה מקצועי יותר?
+
+```
