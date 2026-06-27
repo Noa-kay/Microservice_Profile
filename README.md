@@ -82,9 +82,3 @@ The `appsettings.json` file includes a **Staff6Events** section for event publis
 *Note: This is a demo project. Before deploying, ensure you strengthen JWT secrets, CORS, and security policies.*
 
 ```
-
-***
-
-האם תרצה שאוסיף לקובץ ה-README חלק של "License" או "Credits" כדי שיהיה מקצועי יותר?
-
-```
